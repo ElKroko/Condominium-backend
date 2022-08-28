@@ -35,7 +35,7 @@ type Alert {
 
 input UsuarioInput {
     nombre: String!
-    corrreo: String!
+    correo: String!
     pass: String!
 }
 
@@ -128,3 +128,4 @@ app.use(cors());
 app.listen(8090, function(){
     console.log("servidor Iniciado!!")
 })
+
