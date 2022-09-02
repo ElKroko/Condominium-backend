@@ -1,6 +1,4 @@
 // Nucleo del servicio, donde se va a armar el backend.
-
-
 const express = require('express');
 
 const mongoose = require('mongoose');
@@ -9,17 +7,11 @@ const cors = require('cors');
 
 const {ApolloServer, gql} = require('apollo-server-express');    // Instalamos submodulos del require
 
-
 const {merge} = require('lodash');
-
 
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 
-
-
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', {useNewUrlParser: true, useUnifiedTopology: true}) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
-
-
 
 const typeDefs = gql`
 type Usuario{
@@ -87,7 +79,6 @@ const resolvers = {
             return usuario;
         },
 
-
         //Eliminar usuarios
         async deleteUsuario(obj, {id}){
             await Usuario.deleteOne({_id:id});
@@ -98,7 +89,6 @@ const resolvers = {
     }
 }
 
-
 //Sincronizar ApolloServer con Express
 
 let apolloServer = null;
@@ -108,7 +98,6 @@ const corsOptions = {
     credentials: false
 };
 
-
 //Conectar el servidor
 // Levanta a apollo, y apollo espera a express
 async function startServer(){
@@ -116,10 +105,7 @@ async function startServer(){
     await apolloServer.start();
 
     apolloServer.applyMiddleware({ app, cors:false});
-
 }
-
-
 
 startServer();
 const app = express();
@@ -128,4 +114,3 @@ app.use(cors());
 app.listen(8090, function(){
     console.log("servidor Iniciado!!")
 })
-
