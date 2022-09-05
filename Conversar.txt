@@ -1,1 +1,0 @@
-[models/condominio.js] -> Por que admin esta como array? podrian eventualmente haber mas de 1? 
