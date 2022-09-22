@@ -14,11 +14,80 @@ const Usuario = require('./models/usuario'); // no hace falta especificar que es
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 
 const typeDefs = gql `
+scalar Date
+
 type Usuario{
     id: ID!
     nombre: String!
     email: String!
     pass: String!
+}
+
+type Admin{
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+}
+
+type Directiva{
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+}
+
+type Conserje{
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+}
+
+type Residente{
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    deuda: Int!
+    condominio: Condominio
+}
+
+type LibroGasto{
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
+}
+
+type GastoComun{
+    tipo: String
+    vencimiento: Date!
+    monto: Int!
+    residente: Residente!
+    glosa: String
+    libro: LibroGasto!
+}
+
+type LibroEvento{
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
+}
+
+type Evento{
+    conserje: Conserje!
+    glosa: String!
+    libro: LibroEvento!
+}
+
+type Multa{
+    residente: Residente
+    fecha: Date
+    monto: Int
+    comentario: String
 }
 
 type Condominio{
@@ -27,8 +96,8 @@ type Condominio{
     directiva: [Directiva]
     conserje: [Conserje]
     residente: [Residente]
-    libroEvento: [Libro]
-    gastosComunes: [GastosComunes]
+    libroEvento: LibroEvento
+    libroGasto: LibroGasto
 }
 
 type SuperUser{

@@ -5,8 +5,9 @@ const condominioSchema = new mongoose.Schema({
     directiva: [{ type: mongoose.Schema.ObjectId, ref: "directiva" }],
     conserje: [{ type: mongoose.Schema.ObjectId, ref: "conserje" }],
     residente: [{ type: mongoose.Schema.ObjectId, ref: "residente" }],
-    libroEvento: [{ type: mongoose.Schema.ObjectId, ref: "libroEvento" }],
-    gastosComunes: [{ type: mongoose.Schema.ObjectId, ref: "gastosComunes" }]
+    libroGasto: { type: mongoose.Schema.ObjectId, ref: "librogasto" },
+    libroEvento: { type: mongoose.Schema.ObjectId, ref: "libroevento" },
+    espacios: [{ type: mongoose.Schema.ObjectId, ref: "espacio" }]
 });
 
 module.exports = mongoose.model("Condominio", condominioSchema);
