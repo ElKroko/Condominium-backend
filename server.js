@@ -11,6 +11,7 @@ const { merge } = require('lodash');
 
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 const Conserje = require('./models/conserje');
+const SuperUser = require('./models/superUser');
 
 
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
@@ -114,6 +115,12 @@ type Alert {
     message: String
 }
 
+input SuperUserInput{
+    userName: String!
+    email: String!
+    pass: String!
+}
+
 input UsuarioInput {
     nombre: String!
     email: String!
@@ -130,6 +137,7 @@ type Query {
     getUsuarios: [Usuario] 
     getUsuario(id:ID!) : Usuario
     getConserjes: [Conserje]
+    getConserje(id:ID!) : Conserje
 }
 
 type Mutation {
@@ -137,6 +145,11 @@ type Mutation {
     updateUsuario(id: ID!, input: UsuarioInput) : Usuario
     deleteUsuario(id: ID!) : Alert
     addConserje(input: ConserjeInput): Conserje
+    updateConserje(id: ID!, input: ConserjeInput) : Conserje
+    deleteConserje(id: ID!) : Alert
+    addSuperUser(input: SuperUserInput): SuperUser
+    updateSuperUser(id: ID!, input: SuperUserInput) : SuperUser
+
 }
 `
 
@@ -162,7 +175,11 @@ const resolvers = {
         },
         async getConserjes(obj) {
             return await Conserje.find();
-        }
+        },
+        async getConserje(obj, { id }) {
+            const conserje = await Conserje.findById(id);
+            return conserje;
+        },
     },
     Mutation: {
 
@@ -190,6 +207,30 @@ const resolvers = {
             const conserje = new Conserje(input);
             await conserje.save();
             return conserje;
+        },
+        async updateConserje(obj, { id, input }) {
+            const conserje = await conserje.findByIdAndUpdate(id, input);
+            return conserje;
+        },
+
+        
+        async deleteConserje(obj, { id }) {
+            await Conserje.deleteOne({ _id: id });
+            return {
+                message: "Conserje Eliminado"
+            }
+        },
+        //superusuario
+        async addSuperUser(obj, { input }) {
+            const superUsuario = new SuperUser(input);
+            await superUsuario.save();
+            return superUsuario;
+        },
+
+        
+        async updateSuperUser(obj, { id, input }) {
+            const superUsuario = await superUsuario.findByIdAndUpdate(id, input);
+            return superUsuario;
         }
 
     }
