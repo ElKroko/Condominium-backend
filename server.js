@@ -10,6 +10,8 @@ const { ApolloServer, gql } = require('apollo-server-express'); // Instalamos su
 const { merge } = require('lodash');
 
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
+const Conserje = require('./models/conserje');
+
 
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 
@@ -41,11 +43,12 @@ type Directiva{
 
 type Conserje{
     id: ID!
-    nombre: String!
+    userName: String! 
     email: String!
     pass: String!
     condominio: Condominio
 }
+
 
 type Residente{
     id: ID!
@@ -117,15 +120,23 @@ input UsuarioInput {
     pass: String!
 }
 
+input ConserjeInput {
+    userName: String!
+    email: String!
+    pass: String!
+}
+
 type Query {
     getUsuarios: [Usuario] 
     getUsuario(id:ID!) : Usuario
+    getConserjes: [Conserje]
 }
 
 type Mutation {
     addUsuario(input : UsuarioInput) : Usuario
     updateUsuario(id: ID!, input: UsuarioInput) : Usuario
     deleteUsuario(id: ID!) : Alert
+    addConserje(input: ConserjeInput): Conserje
 }
 `
 
@@ -148,6 +159,9 @@ const resolvers = {
         async getUsuario(obj, { id }) {
             const usuario = await Usuario.findById(id);
             return usuario;
+        },
+        async getConserjes(obj) {
+            return await Conserje.find();
         }
     },
     Mutation: {
@@ -171,7 +185,13 @@ const resolvers = {
             return {
                 message: "Usuario Eliminado"
             }
+        },
+        async addConserje(obj, { input }) {
+            const conserje = new Conserje(input);
+            await conserje.save();
+            return conserje;
         }
+
     }
 }
 
