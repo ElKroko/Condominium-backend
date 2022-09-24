@@ -10,4 +10,4 @@ const conserjeSchema = new mongoose.Schema({
     condominio: { type: mongoose.Schema.ObjectId, ref: "condominio" }
 });
 
-module.exports = mongoose.model("Conserje", conserjeSchema);
+module.exports = mongoose.model("Conserje", conserjeSchema); 
