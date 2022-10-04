@@ -137,6 +137,31 @@ const typeDefs = gql `
     userName: String!
     email: String!
     pass: String!
+    codominio: Condominio
+  }
+
+  input AdminInput {
+    nombre: String!
+    email: String!
+    pass: String!
+    codominio: Condominio
+  }
+
+  input CondominioInput{
+    //! Como se hace aca? Los elementos puede que no esten creados aun
+  }
+
+  input DirectivaInput{
+    nombre: String!
+    email: String!
+    pass: String!
+    codominio: Condominio
+  }
+
+  input EspacioInput{
+    nombre: String!
+    reserva: Reserva
+    reservado: Boolean!
   }
 
   type Query {
@@ -154,11 +179,29 @@ const typeDefs = gql `
     addUsuario(input: UsuarioInput): Usuario
     updateUsuario(id: ID!, input: UsuarioInput): Usuario
     deleteUsuario(id: ID!): Alert
+
     addConserje(input: ConserjeInput): Conserje
     updateConserje(id: ID!, input: ConserjeInput): Conserje
     deleteConserje(id: ID!): Alert
+
     addSuperUser(input: SuperUserInput): SuperUser
     updateSuperUser(id: ID!, input: SuperUserInput): SuperUser
+
+    addAdmin(input: AdminInput): Admin
+    updateAdmin(id: ID!, input: AdminInput): Admin
+    deleteAdmin(id: ID!): Alert
+
+    addCondominio(input: CondominioInput): Condominio
+    updateCondominio(id: ID!, input: CondominioInput): Condominio
+    deleteCondominio(id: ID!): Alert
+
+    addDirectiva(input: DirectivaInput): Directiva
+    updateDirectiva(id: ID!, input: DirectivaInput): Directiva
+    deleteDirectiva(id: ID!): Alert
+
+    addEspacio(input: EspacioInput): Espacio
+    updateEspacio(id: ID!, input: EspacioInput): Espacio
+    deleteEspacio(id: ID!): Alert
   }
 `;
 
@@ -239,8 +282,6 @@ const resolvers = {
             const conserje = await conserje.findByIdAndUpdate(id, input);
             return conserje;
         },
-
-
         async deleteConserje(obj, { id }) {
             await Conserje.deleteOne({ _id: id });
             return {
@@ -258,8 +299,75 @@ const resolvers = {
         async updateSuperUser(obj, { id, input }) {
             const superUsuario = await superUsuario.findByIdAndUpdate(id, input);
             return superUsuario;
-        }
+        },
 
+        //Admin
+        async addAdmin(obj, { input }) {
+            const admin = new Admin(input);
+            await admin.save();
+            return admin;
+        },
+        async updateAdmin(obj, { id, input }) {
+            const admin = await admin.findByIdAndUpdate(id, input);
+            return admin;
+        },
+        async deleteAdmin(obj, { id }) {
+            await Admin.deleteOne({ _id: id });
+            return {
+                message: "Admin Eliminado"
+            }
+        },
+
+        //Condominio
+        async addCondominio(obj, { input }) {
+            const condominio = new Condominio(input);
+            await condominio.save();
+            return condominio;
+        },
+        async updateCondominio(obj, { id, input }) {
+            const condominio = await admin.findByIdAndUpdate(id, input);
+            return condominio;
+        },
+        async deleteCondominio(obj, { id }) {
+            await Condominio.deleteOne({ _id: id });
+            return {
+                message: "Condominio Eliminado"
+            }
+        },
+
+        //Directiva
+        async addDirectiva(obj, { input }) {
+            const directiva = new Directiva(input);
+            await directiva.save();
+            return directiva;
+        },
+        async updateDirectiva(obj, { id, input }) {
+            const directiva = await admin.findByIdAndUpdate(id, input);
+            return directiva;
+        },
+        async deleteDirectiva(obj, { id }) {
+            await Directiva.deleteOne({ _id: id });
+            return {
+                message: "Directiva Eliminada"
+            }
+        },
+
+        //Espacio
+        async addEspacio(obj, { input }) {
+            const espacio = new Espacio(input);
+            await espacio.save();
+            return espacio;
+        },
+        async updateEspacio(obj, { id, input }) {
+            const espacio = await admin.findByIdAndUpdate(id, input);
+            return espacio;
+        },
+        async deleteEspacio(obj, { id }) {
+            await Espacio.deleteOne({ _id: id });
+            return {
+                message: "Espacio Eliminado"
+            }
+        },
     }
 }
 
