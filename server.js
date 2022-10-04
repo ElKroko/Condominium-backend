@@ -12,6 +12,9 @@ const { merge } = require('lodash');
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 const Conserje = require('./models/conserje');
 const SuperUser = require('./models/superUser');
+const Multa = require('./models/multa');
+const Reserva = require('./models/reserva');
+const Residente = require('./models/residente');
 
 
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
@@ -96,7 +99,7 @@ const typeDefs = gql `
 
   type Residente {
     id: ID!
-    nombre: String!
+    userName: String!
     email: String!
     pass: String!
     deuda: Int!
@@ -156,6 +159,29 @@ const typeDefs = gql `
     email: String!
     pass: String!
   }
+  
+  input MultaInput{
+    residente: String!
+    fecha: Date!
+    monto: Int
+    comentario: String
+  }
+
+  input ReservaInput{
+    residente: String!
+    espacio: String!
+    pagado: Boolean
+
+  }
+  
+  input ResidenteInput{
+    userName: String!
+    email: String!
+    pass: String!
+    deuda: Int
+    condominio: String
+
+  }
 
 
 
@@ -173,6 +199,12 @@ const typeDefs = gql `
     getCondominio(id: ID!): Condominio
     getDirectiva(id: ID!): Directiva
     getEspaciosByCondominio(id: ID!): [Espacio]
+    getMulta(id:ID!): Multa
+    getMultas: [Multa]
+    getReserva(id:ID!): Reserva
+    getReservas: [Reserva]
+    getResidente(id:ID!): Residente
+    getResidentes: [Residente]
   }
 
   type Mutation {
@@ -202,6 +234,18 @@ const typeDefs = gql `
     addEspacio(input: EspacioInput): Espacio
     updateEspacio(id: ID!, input: EspacioInput): Espacio
     deleteEspacio(id: ID!): Alert
+
+    addMulta(input: MultaInput): Multa
+    updateMulta(id: ID!, input: MultaInput): Multa
+    deleteMulta(id: ID!): Alert
+
+    addReserva(input: ReservaInput): Reserva
+    updateReserva(id: ID!, input: ReservaInput): Reserva
+    deleteReserva(id: ID!): Alert
+
+    addResidente(input: ResidenteInput): Residente
+    updateResidente(id: ID!, input: ResidenteInput): Residente
+    deleteResidente(id: ID!): Alert
 
     
   }
@@ -252,8 +296,40 @@ const resolvers = {
             const espacios = condominio.espacios;
             return espacios;
         },
+
+        //multa reserva y residente
+
+        async getMulta(obj, { id }) {
+            const multa = await Multa.findById(id);
+            return multa;
+        },
+        async getMultas(obj) {
+            return await Multa.find();
+        },
+
+        async getReserva(obj, { id }) {
+            const reserva = await Reserva.findById(id);
+            return reserva;
+        },
+        async getReservas(obj) {
+            return await Reserva.find();
+        },
+        async getResidente(obj, { id }) {
+            const residente = await Residente.findById(id);
+            return residente;
+        },
+        async getResidentes(obj) {
+            return await Residente.find();
+        }
+        
+
+
+
+
     },
     Mutation: {
+
+        //multa reserva y residente
 
         //Agregar usuarios
         async addUsuario(obj, { input }) {
@@ -370,6 +446,59 @@ const resolvers = {
                 message: "Espacio Eliminado"
             }
         },
+
+        //Multa
+
+        async addMulta(obj, { input }) {
+            const multa = new Multa(input);
+            await multa.save();
+            return multa;
+        },
+        async updateMulta(obj, { id, input }) {
+            const multa = await Multa.findByIdAndUpdate(id, input);
+            return multa;
+        },
+        async deleteMulta(obj, { id }) {
+            await Multa.deleteOne({ _id: id });
+            return {
+                message: "Multa Eliminada"
+            }
+        },
+
+        //reserva
+        async addReserva(obj, { input }) {
+            const reserva = new Reserva(input);
+            await reserva.save();
+            return reserva;
+        },
+        async updateReserva(obj, { id, input }) {
+            const reserva = await Reserva.findByIdAndUpdate(id, input);
+            return reserva;
+        },
+        async deleteReserva(obj, { id }) {
+            await Reserva.deleteOne({ _id: id });
+            return {
+                message: "Reserva Eliminada"
+            }
+        },
+
+        //residente
+
+        async addResidente(obj, { input }) {
+            const residente = new Residente(input);
+            await residente.save();
+            return residente;
+        },
+        async updateResidente(obj, { id, input }) {
+            const residente = await Residente.findByIdAndUpdate(id, input);
+            return residente;
+        },
+        async deleteResidente(obj, { id }) {
+            await Residente.deleteOne({ _id: id });
+            return {
+                message: "Residente Eliminado"
+            }
+        }
     }
 }
 
