@@ -9,4 +9,4 @@ const eventoSchema = new mongoose.Schema({
     eventos: [{ type: mongoose.Schema.ObjectId, ref: "evento" }]
 });
 
-module.exports = mongoose.model("Evento", eventoSchema);
+module.exports = mongoose.model("LibroEvento", eventoSchema);
