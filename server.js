@@ -103,6 +103,12 @@ const typeDefs = gql `
     condominio: Condominio
   }
 
+  type Reserva{
+    residente: Residente!
+    espacio: Espacio
+    pagado: Boolean
+  }
+
   type SuperUser {
     id: ID!
     userName: String!
@@ -137,30 +143,24 @@ const typeDefs = gql `
     userName: String!
     email: String!
     pass: String!
-    codominio: Condominio
   }
 
   input AdminInput {
     nombre: String!
     email: String!
     pass: String!
-    codominio: Condominio
-  }
-
-  input CondominioInput{
-    //! Como se hace aca? Los elementos puede que no esten creados aun
   }
 
   input DirectivaInput{
     nombre: String!
     email: String!
     pass: String!
-    codominio: Condominio
   }
+
+
 
   input EspacioInput{
     nombre: String!
-    reserva: Reserva
     reservado: Boolean!
   }
 
@@ -191,8 +191,8 @@ const typeDefs = gql `
     updateAdmin(id: ID!, input: AdminInput): Admin
     deleteAdmin(id: ID!): Alert
 
-    addCondominio(input: CondominioInput): Condominio
-    updateCondominio(id: ID!, input: CondominioInput): Condominio
+    addCondominio(id: ID!): Condominio
+    updateCondominio(id: ID!): Condominio
     deleteCondominio(id: ID!): Alert
 
     addDirectiva(input: DirectivaInput): Directiva
@@ -202,6 +202,8 @@ const typeDefs = gql `
     addEspacio(input: EspacioInput): Espacio
     updateEspacio(id: ID!, input: EspacioInput): Espacio
     deleteEspacio(id: ID!): Alert
+
+    
   }
 `;
 
