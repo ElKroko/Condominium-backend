@@ -17,84 +17,17 @@ const SuperUser = require('./models/superUser');
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 
 const typeDefs = gql `
-scalar Date
+  scalar Date
 
-type Usuario{
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-}
-
-type Admin{
+  type Admin {
     id: ID!
     nombre: String!
     email: String!
     pass: String!
     condominio: Condominio
-}
+  }
 
-type Directiva{
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-    condominio: Condominio
-}
-
-type Conserje{
-    id: ID!
-    userName: String! 
-    email: String!
-    pass: String!
-    condominio: Condominio
-}
-
-
-type Residente{
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-    deuda: Int!
-    condominio: Condominio
-}
-
-type LibroGasto{
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-}
-
-type GastoComun{
-    tipo: String
-    vencimiento: Date!
-    monto: Int!
-    residente: Residente!
-    glosa: String
-    libro: LibroGasto!
-}
-
-type LibroEvento{
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-}
-
-type Evento{
-    conserje: Conserje!
-    glosa: String!
-    libro: LibroEvento!
-}
-
-type Multa{
-    residente: Residente
-    fecha: Date
-    monto: Int
-    comentario: String
-}
-
-type Condominio{
+  type Condominio {
     id: ID!
     admin: [Admin]
     directiva: [Directiva]
@@ -102,56 +35,132 @@ type Condominio{
     residente: [Residente]
     libroEvento: LibroEvento
     libroGasto: LibroGasto
-}
+    espacios: [Espacio]
+  }
 
-type SuperUser{
+  type Conserje {
+    id: ID!
+    userName: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+  }
+
+  type Directiva {
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+  }
+
+  type Espacio {
+    nombre: String!
+    reserva: Reserva
+    reservado: Boolean!
+  }
+
+  type Evento {
+    conserje: Conserje!
+    glosa: String!
+    libro: LibroEvento!
+  }
+
+  type GastoComun {
+    tipo: String
+    vencimiento: Date!
+    monto: Int!
+    residente: Residente!
+    glosa: String
+    libro: LibroGasto!
+  }
+
+  type LibroEvento {
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
+  }
+
+  type LibroGasto {
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
+  }
+
+  type Multa {
+    residente: Residente
+    fecha: Date
+    monto: Int
+    comentario: String
+  }
+
+  type Residente {
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    deuda: Int!
+    condominio: Condominio
+  }
+
+  type SuperUser {
     id: ID!
     userName: String!
     pass: String!
     email: String!
-}
+  }
 
-type Alert {
-    message: String
-}
-
-input SuperUserInput{
-    userName: String!
-    email: String!
-    pass: String!
-}
-
-input UsuarioInput {
+  type Usuario {
+    id: ID!
     nombre: String!
     email: String!
     pass: String!
-}
+  }
 
-input ConserjeInput {
+  type Alert {
+    message: String
+  }
+
+  input SuperUserInput {
     userName: String!
     email: String!
     pass: String!
-}
+  }
 
-type Query {
-    getUsuarios: [Usuario] 
-    getUsuario(id:ID!) : Usuario
+  input UsuarioInput {
+    nombre: String!
+    email: String!
+    pass: String!
+  }
+
+  input ConserjeInput {
+    userName: String!
+    email: String!
+    pass: String!
+  }
+
+  type Query {
+    getUsuarios: [Usuario]
+    getUsuario(id: ID!): Usuario
     getConserjes: [Conserje]
-    getConserje(id:ID!) : Conserje
-}
+    getConserje(id: ID!): Conserje
+    getAdmin(id: ID!): Admin
+    getCondominio(id: ID!): Condominio
+    getDirectiva(id: ID!): Directiva
+    getEspaciosByCondominio(id: ID!): [Espacio]
+  }
 
-type Mutation {
-    addUsuario(input : UsuarioInput) : Usuario
-    updateUsuario(id: ID!, input: UsuarioInput) : Usuario
-    deleteUsuario(id: ID!) : Alert
+  type Mutation {
+    addUsuario(input: UsuarioInput): Usuario
+    updateUsuario(id: ID!, input: UsuarioInput): Usuario
+    deleteUsuario(id: ID!): Alert
     addConserje(input: ConserjeInput): Conserje
-    updateConserje(id: ID!, input: ConserjeInput) : Conserje
-    deleteConserje(id: ID!) : Alert
+    updateConserje(id: ID!, input: ConserjeInput): Conserje
+    deleteConserje(id: ID!): Alert
     addSuperUser(input: SuperUserInput): SuperUser
-    updateSuperUser(id: ID!, input: SuperUserInput) : SuperUser
-
-}
-`
+    updateSuperUser(id: ID!, input: SuperUserInput): SuperUser
+  }
+`;
 
 // tilde grave indica que se hace una interpolacion de string en lo que esta dentro
 // Exclamacion porque es MANDATORY
@@ -176,9 +185,27 @@ const resolvers = {
         async getConserjes(obj) {
             return await Conserje.find();
         },
+        async getAdmin(obj, { id }) {
+            const admin = await Admin.findById(id);
+            return admin;
+        },
+        async getCondominio(obj, { id }) {
+            const condominio = await Condominio.findById(id);
+            return condominio;
+        },
         async getConserje(obj, { id }) {
             const conserje = await Conserje.findById(id);
             return conserje;
+        },
+        async getDirectiva(obj, { id }) {
+            const directiva = await Directiva.findById(id);
+            return directiva;
+        },
+        async getEspaciosByCondominio(obj, { id }) { //! Aca, se supone que se le debe entregar el id del condominio, cierto? de ser asi, el input debe cambiar su nombre? Y se le puede colocar un nombre descriptivo a la variable del input? o debe tener el mismo nombre presente en el Template String?
+
+            const condominio = await Condominio.findById(id);
+            const espacios = condominio.espacios;
+            return espacios;
         },
     },
     Mutation: {
@@ -213,7 +240,7 @@ const resolvers = {
             return conserje;
         },
 
-        
+
         async deleteConserje(obj, { id }) {
             await Conserje.deleteOne({ _id: id });
             return {
@@ -227,7 +254,7 @@ const resolvers = {
             return superUsuario;
         },
 
-        
+
         async updateSuperUser(obj, { id, input }) {
             const superUsuario = await superUsuario.findByIdAndUpdate(id, input);
             return superUsuario;
