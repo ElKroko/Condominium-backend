@@ -12,6 +12,7 @@ const { merge } = require('lodash');
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 const Conserje = require('./models/conserje');
 const SuperUser = require('./models/superUser');
+const Condominio = require('./models/condominio');
 
 
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
@@ -47,7 +48,7 @@ type Conserje{
     userName: String! 
     email: String!
     pass: String!
-    condominio: Condominio
+    condominio: Condominio!
 }
 
 
@@ -96,9 +97,10 @@ type Multa{
 
 type Condominio{
     id: ID!
+    nombre: String!
     admin: [Admin]
     directiva: [Directiva]
-    conserje: [Conserje]
+    conserjes: [Conserje]
     residente: [Residente]
     libroEvento: LibroEvento
     libroGasto: LibroGasto
@@ -131,20 +133,27 @@ input ConserjeInput {
     userName: String!
     email: String!
     pass: String!
+    condominio: String!
 }
+input CondominioInput {
+    nombre: String!
+}
+
 
 type Query {
     getUsuarios: [Usuario] 
     getUsuario(id:ID!) : Usuario
     getConserjes: [Conserje]
     getConserje(id:ID!) : Conserje
+    getCondominio: [Condominio]
 }
 
 type Mutation {
     addUsuario(input : UsuarioInput) : Usuario
+    addCondominio(input : CondominioInput) : Condominio
     updateUsuario(id: ID!, input: UsuarioInput) : Usuario
     deleteUsuario(id: ID!) : Alert
-    addConserje(input: ConserjeInput): Conserje
+    addConserje(userName: String!, email: String!, pass: String!, condominio: String!): Conserje
     updateConserje(id: ID!, input: ConserjeInput) : Conserje
     deleteConserje(id: ID!) : Alert
     addSuperUser(input: SuperUserInput): SuperUser
@@ -167,6 +176,10 @@ const resolvers = {
         async getUsuarios(obj) {
             return await Usuario.find();
         },
+        async getCondominio(obj) {
+            const condo = await Condominio.find();
+            return condo;
+        },
 
         //Buscar x ID
         async getUsuario(obj, { id }) {
@@ -178,10 +191,19 @@ const resolvers = {
         },
         async getConserje(obj, { id }) {
             const conserje = await Conserje.findById(id);
+            
             return conserje;
         },
     },
     Mutation: {
+
+        async addCondominio(obj, { input }) {
+            const condo = new Condominio(input);
+            await condo.save();
+            return condo;
+        },
+
+
 
         //Agregar usuarios
         async addUsuario(obj, { input }) {
@@ -203,9 +225,13 @@ const resolvers = {
                 message: "Usuario Eliminado"
             }
         },
-        async addConserje(obj, { input }) {
-            const conserje = new Conserje(input);
-            await conserje.save();
+        async addConserje(_, { userName, email, pass, condominio: condominioId }) {
+            const conserje = new Conserje({ userName, email, pass, condominio: condominioId });
+            const conserjeCreado =  await conserje.save();
+            const condo = await Condominio.findById(condominioId);
+            console.log(condo)
+            condo.conserjes.push(conserjeCreado);
+            await condo.save();
             return conserje;
         },
         async updateConserje(obj, { id, input }) {
