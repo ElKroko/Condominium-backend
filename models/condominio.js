@@ -2,13 +2,13 @@ const mongoose = require("mongoose");
 
 const condominioSchema = new mongoose.Schema({
     nombre: String,
-    admin: { type: mongoose.Schema.ObjectId, ref: "admin" },
-    directiva: [{ type: mongoose.Schema.ObjectId, ref: "directiva" }],
-    conserjes: [{ type: mongoose.Schema.Types.ObjectId, ref: "conserje" }],
-    residente: [{ type: mongoose.Schema.ObjectId, ref: "residente" }],
-    libroGasto: { type: mongoose.Schema.ObjectId, ref: "librogasto" },
-    libroEvento: { type: mongoose.Schema.ObjectId, ref: "libroevento" },
-    espacios: [{ type: mongoose.Schema.ObjectId, ref: "espacio" }]
+    admin: { type: mongoose.Schema.ObjectId, ref: "Admin" },
+    directiva: [{ type: mongoose.Schema.ObjectId, ref: "Directiva" }],
+    conserjes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Conserje" }],
+    residente: [{ type: mongoose.Schema.ObjectId, ref: "Residente" }],
+    libroGasto: { type: mongoose.Schema.ObjectId, ref: "LibroGasto" },
+    libroEvento: { type: mongoose.Schema.ObjectId, ref: "LibroEvento" },
+    espacios: [{ type: mongoose.Schema.ObjectId, ref: "Espacio" }]
 });
 
 module.exports = mongoose.model("Condominio", condominioSchema);

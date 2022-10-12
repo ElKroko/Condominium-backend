@@ -7,9 +7,9 @@ const gastoComunSchema = new mongoose.Schema({
     tipo: String,
     vencimiento: Date,
     monto: Number,
-    residente: { type: mongoose.Schema.ObjectId, ref: "residente" },
+    residente: { type: mongoose.Schema.ObjectId, ref: "Residente" },
     glosa: String,
-    libro: { type: mongoose.Schema.ObjectId, ref: "librogasto" }
+    libro: { type: mongoose.Schema.ObjectId, ref: "LibroGasto" }
 });
 
 module.exports = mongoose.model("GastoComun", gastoComunSchema);

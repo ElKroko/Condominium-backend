@@ -5,8 +5,8 @@ const mongoose = require("mongoose");
 
 const eventoSchema = new mongoose.Schema({
     cantidad: Number,
-    condominio: { type: mongoose.Schema.ObjectId, ref: "condominio" },
-    eventos: [{ type: mongoose.Schema.ObjectId, ref: "evento" }]
+    condominio: { type: mongoose.Schema.ObjectId, ref: "Condominio" },
+    eventos: [{ type: mongoose.Schema.ObjectId, ref: "Evento" }]
 });
 
-module.exports = mongoose.model("Evento", eventoSchema);
+module.exports = mongoose.model("LibroEvento", eventoSchema);

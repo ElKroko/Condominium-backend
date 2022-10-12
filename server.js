@@ -133,8 +133,8 @@ input ConserjeInput {
     userName: String!
     email: String!
     pass: String!
-    condominio: String!
 }
+
 input CondominioInput {
     nombre: String!
 }
@@ -153,7 +153,7 @@ type Mutation {
     addCondominio(input : CondominioInput) : Condominio
     updateUsuario(id: ID!, input: UsuarioInput) : Usuario
     deleteUsuario(id: ID!) : Alert
-    addConserje(userName: String!, email: String!, pass: String!, condominio: String!): Conserje
+    addConserje(input: ConserjeInput, idCondominio: String): Conserje
     updateConserje(id: ID!, input: ConserjeInput) : Conserje
     deleteConserje(id: ID!) : Alert
     addSuperUser(input: SuperUserInput): SuperUser
@@ -177,7 +177,7 @@ const resolvers = {
             return await Usuario.find();
         },
         async getCondominio(obj) {
-            const condo = await Condominio.find();
+            const condo = await Condominio.find().populate('conserjes');
             return condo;
         },
 
@@ -192,7 +192,7 @@ const resolvers = {
         async getConserje(obj, { id }) {
             const conserje = await Conserje.findById(id);
             
-            return conserje;
+            return await conserje.populate('condominio');
         },
     },
     Mutation: {
@@ -225,14 +225,15 @@ const resolvers = {
                 message: "Usuario Eliminado"
             }
         },
-        async addConserje(_, { userName, email, pass, condominio: condominioId }) {
-            const conserje = new Conserje({ userName, email, pass, condominio: condominioId });
-            const conserjeCreado =  await conserje.save();
-            const condo = await Condominio.findById(condominioId);
-            console.log(condo)
-            condo.conserjes.push(conserjeCreado);
+        async addConserje(_, { input, idCondominio}) {
+            const condo = await Condominio.findById(idCondominio);
+            let conserje = new Conserje({... input, condominio: condo._id });
+            conserje = await conserje.save();
+            console.log(condo);
+            console.log(conserje);
+            condo.conserjes.push(conserje);
             await condo.save();
-            return conserje;
+            return await conserje.populate('condominio');
         },
         async updateConserje(obj, { id, input }) {
             const conserje = await conserje.findByIdAndUpdate(id, input);
