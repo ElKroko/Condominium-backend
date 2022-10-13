@@ -4,9 +4,9 @@
 const mongoose = require('mongoose');
 
 const usuarioSchema = new mongoose.Schema({
-    correo: String,
+    email: String,
     pass: String,
     nombre: String
 })
 
-module.exports = mongoose.model('Usuario', usuarioSchema)
+module.exports = mongoose.model('Usuario', usuarioSchema) 
