@@ -17,7 +17,13 @@ const Reserva = require('./models/reserva');
 const Residente = require('./models/residente');
 
 
-mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
+// Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
+mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) 
+const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
+const Conserje = require('./models/conserje');
+const SuperUser = require('./models/superUser');
+const Evento = require('./models/evento');
+
 
 const typeDefs = gql `
   scalar Date
@@ -126,7 +132,99 @@ const typeDefs = gql `
     pass: String!
   }
 
+  type Condominio {
+    id: ID!
+    admin: [Admin]
+    directiva: [Directiva]
+    conserje: [Conserje]
+    residente: [Residente]
+    libroEvento: LibroEvento
+    libroGasto: LibroGasto
+    espacios: [Espacio]
+  }
+
+  type Conserje {
+    id: ID!
+    userName: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+  }
+
+  type Directiva {
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    condominio: Condominio
+  }
+
+  type Espacio {
+    nombre: String!
+    reserva: Reserva
+    reservado: Boolean!
+  }
+
+  type Evento {
+    conserje: Conserje!
+    glosa: String!
+    libro: LibroEvento!
+    fecha: Date
+  }
+
+  type GastoComun {
+    tipo: String
+    vencimiento: Date!
+    monto: Int!
+    residente: Residente!
+    glosa: String
+    libro: LibroGasto!
+  }
+
+  type LibroEvento {
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
+  }
+
+  type LibroGasto {
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
+  }
+
+  type Multa {
+    residente: Residente
+    fecha: Date
+    monto: Int
+    comentario: String
+  }
+
+  type Residente {
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    deuda: Int!
+    condominio: Condominio
+  }
+
+  type SuperUser {
+    id: ID!
+    userName: String!
+    pass: String!
+    email: String!
+  }
+
+  type Usuario {
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+  }
+
   type Alert {
+
     message: String
   }
 
@@ -447,6 +545,7 @@ const resolvers = {
             }
         },
 
+
         //Multa
 
         async addMulta(obj, { input }) {
@@ -499,6 +598,16 @@ const resolvers = {
                 message: "Residente Eliminado"
             }
         }
+
+
+        // Eventos
+
+        async addEvento(obj, { input }){
+              const evento = new Evento(input);
+              await evento.save();
+              return evento;
+        },
+
     }
 }
 
