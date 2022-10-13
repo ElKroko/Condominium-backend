@@ -7,7 +7,7 @@ const adminSchema = new mongoose.Schema({
     userName: String,
     pass: String,
     email: String,
-    condominio: { type: mongoose.Schema.ObjectId, ref: "condominio" }
+    condominio: { type: mongoose.Schema.ObjectId, ref: "Condominio" }
 });
 
 module.exports = mongoose.model("Admin", adminSchema);

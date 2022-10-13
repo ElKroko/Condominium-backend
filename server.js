@@ -12,6 +12,7 @@ const { merge } = require('lodash');
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 const Conserje = require('./models/conserje');
 const SuperUser = require('./models/superUser');
+const Condominio = require('./models/condominio');
 const Multa = require('./models/multa');
 const Reserva = require('./models/reserva');
 const Residente = require('./models/residente');
@@ -111,6 +112,7 @@ const typeDefs = gql `
     deuda: Int!
     condominio: Condominio
   }
+
 
   type Reserva{
     residente: Residente!
@@ -283,6 +285,11 @@ const typeDefs = gql `
 
 
 
+
+  input CondominioInput {
+      nombre: String!
+  }
+
   input EspacioInput{
     nombre: String!
     reservado: Boolean!
@@ -345,7 +352,6 @@ const typeDefs = gql `
     updateResidente(id: ID!, input: ResidenteInput): Residente
     deleteResidente(id: ID!): Alert
 
-    
   }
 `;
 
@@ -362,6 +368,10 @@ const resolvers = {
     Query: {
         async getUsuarios(obj) {
             return await Usuario.find();
+        },
+        async getCondominio(obj) {
+            const condo = await Condominio.find().populate('conserjes');
+            return condo;
         },
 
         //Buscar x ID
@@ -382,7 +392,8 @@ const resolvers = {
         },
         async getConserje(obj, { id }) {
             const conserje = await Conserje.findById(id);
-            return conserje;
+            
+            return await conserje.populate('condominio');
         },
         async getDirectiva(obj, { id }) {
             const directiva = await Directiva.findById(id);
@@ -427,7 +438,12 @@ const resolvers = {
     },
     Mutation: {
 
-        //multa reserva y residente
+        async addCondominio(obj, { input }) {
+            const condo = new Condominio(input);
+            await condo.save();
+            return condo;
+        },
+
 
         //Agregar usuarios
         async addUsuario(obj, { input }) {
@@ -449,10 +465,15 @@ const resolvers = {
                 message: "Usuario Eliminado"
             }
         },
-        async addConserje(obj, { input }) {
-            const conserje = new Conserje(input);
-            await conserje.save();
-            return conserje;
+        async addConserje(_, { input, idCondominio}) {
+            const condo = await Condominio.findById(idCondominio);
+            let conserje = new Conserje({... input, condominio: condo._id });
+            conserje = await conserje.save();
+            console.log(condo);
+            console.log(conserje);
+            condo.conserjes.push(conserje);
+            await condo.save();
+            return await conserje.populate('condominio');
         },
         async updateConserje(obj, { id, input }) {
             const conserje = await conserje.findByIdAndUpdate(id, input);

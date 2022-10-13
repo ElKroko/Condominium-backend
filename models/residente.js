@@ -8,7 +8,7 @@ const residenteSchema = new mongoose.Schema({
     pass: String,
     email: String,
     deuda: Number,
-    condominio: { type: mongoose.Schema.ObjectId, ref: "condominio" }
+    condominio: { type: mongoose.Schema.ObjectId, ref: "Condominio" }
 });
 
 module.exports = mongoose.model("Residente", residenteSchema);
