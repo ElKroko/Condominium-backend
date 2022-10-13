@@ -37,6 +37,7 @@ const typeDefs = gql `
 
   type Condominio {
     id: ID!
+    nombre: String
     admin: [Admin]
     directiva: [Directiva]
     conserje: [Conserje]
@@ -327,7 +328,7 @@ const typeDefs = gql `
     updateAdmin(id: ID!, input: AdminInput): Admin
     deleteAdmin(id: ID!): Alert
 
-    addCondominio(id: ID!): Condominio
+    addCondominio(input: CondominioInput): Condominio
     updateCondominio(id: ID!): Condominio
     deleteCondominio(id: ID!): Alert
 
@@ -369,7 +370,7 @@ const resolvers = {
             return await Usuario.find();
         },
         async getCondominios(obj) {
-            const condo = await Condominio.find().populate('conserjes');
+            const condo = await Condominio.find().populate('conserje');
             return condo;
         },
 
@@ -437,12 +438,6 @@ const resolvers = {
     },
     Mutation: {
 
-        async addCondominio(obj, { input }) {
-            const condo = new Condominio(input);
-            await condo.save();
-            return condo;
-        },
-
 
         //Agregar usuarios
         async addUsuario(obj, { input }) {
@@ -470,7 +465,7 @@ const resolvers = {
             conserje = await conserje.save();
             console.log(condo);
             console.log(conserje);
-            condo.conserjes.push(conserje);
+            condo.conserje.push(conserje);
             await condo.save();
             return await conserje.populate('condominio');
         },
