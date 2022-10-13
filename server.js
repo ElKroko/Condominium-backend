@@ -16,14 +16,12 @@ const Condominio = require('./models/condominio');
 const Multa = require('./models/multa');
 const Reserva = require('./models/reserva');
 const Residente = require('./models/residente');
-
+const Evento = require('./models/evento');
 
 // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) 
-const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
-const Conserje = require('./models/conserje');
-const SuperUser = require('./models/superUser');
-const Evento = require('./models/evento');
+
+
 
 
 const typeDefs = gql `
@@ -302,6 +300,7 @@ const typeDefs = gql `
     getConserje(id: ID!): Conserje
     getAdmin(id: ID!): Admin
     getCondominio(id: ID!): Condominio
+    getCondominios: [Condominio]
     getDirectiva(id: ID!): Directiva
     getEspaciosByCondominio(id: ID!): [Espacio]
     getMulta(id:ID!): Multa
@@ -317,7 +316,7 @@ const typeDefs = gql `
     updateUsuario(id: ID!, input: UsuarioInput): Usuario
     deleteUsuario(id: ID!): Alert
 
-    addConserje(input: ConserjeInput): Conserje
+    addConserje(input: ConserjeInput, idCondominio: String): Conserje
     updateConserje(id: ID!, input: ConserjeInput): Conserje
     deleteConserje(id: ID!): Alert
 
@@ -369,7 +368,7 @@ const resolvers = {
         async getUsuarios(obj) {
             return await Usuario.find();
         },
-        async getCondominio(obj) {
+        async getCondominios(obj) {
             const condo = await Condominio.find().populate('conserjes');
             return condo;
         },
@@ -618,16 +617,9 @@ const resolvers = {
             return {
                 message: "Residente Eliminado"
             }
-        }
-
-
-        // Eventos
-
-        async addEvento(obj, { input }){
-              const evento = new Evento(input);
-              await evento.save();
-              return evento;
         },
+
+
 
     }
 }
