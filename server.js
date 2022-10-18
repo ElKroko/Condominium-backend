@@ -17,9 +17,11 @@ const Multa = require('./models/multa');
 const Reserva = require('./models/reserva');
 const Residente = require('./models/residente');
 const Evento = require('./models/evento');
+const Admin = require("./models/admin");
+const Directiva = require("./models/directiva");
 
 // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
-mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) 
+mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true })
 
 
 
@@ -29,7 +31,7 @@ const typeDefs = gql `
 
   type Admin {
     id: ID!
-    nombre: String!
+    userName: String!
     email: String!
     pass: String!
     condominio: Condominio
@@ -112,8 +114,7 @@ const typeDefs = gql `
     condominio: Condominio
   }
 
-
-  type Reserva{
+  type Reserva {
     residente: Residente!
     espacio: Espacio
     pagado: Boolean
@@ -154,7 +155,7 @@ const typeDefs = gql `
 
   type Directiva {
     id: ID!
-    nombre: String!
+    userName: String!
     email: String!
     pass: String!
     condominio: Condominio
@@ -194,13 +195,6 @@ const typeDefs = gql `
     gastos: [GastoComun]
   }
 
-  type Multa {
-    residente: Residente
-    fecha: Date
-    monto: Int
-    comentario: String
-  }
-
   type Residente {
     id: ID!
     nombre: String!
@@ -225,7 +219,6 @@ const typeDefs = gql `
   }
 
   type Alert {
-
     message: String
   }
 
@@ -248,48 +241,43 @@ const typeDefs = gql `
   }
 
   input AdminInput {
-    nombre: String!
+    userName: String!
     email: String!
     pass: String!
   }
 
-  input DirectivaInput{
-    nombre: String!
+  input DirectivaInput {
+    userName: String!
     email: String!
     pass: String!
   }
-  
-  input MultaInput{
+
+  input MultaInput {
     residente: String!
-    fecha: Date!
+    fecha: Date
     monto: Int
     comentario: String
   }
 
-  input ReservaInput{
+  input ReservaInput {
     residente: String!
     espacio: String!
     pagado: Boolean
-
   }
-  
-  input ResidenteInput{
+
+  input ResidenteInput {
     userName: String!
     email: String!
     pass: String!
     deuda: Int
     condominio: String
-
   }
-
-
-
 
   input CondominioInput {
-      nombre: String!
+    nombre: String!
   }
 
-  input EspacioInput{
+  input EspacioInput {
     nombre: String!
     reservado: Boolean!
   }
@@ -300,15 +288,17 @@ const typeDefs = gql `
     getConserjes: [Conserje]
     getConserje(id: ID!): Conserje
     getAdmin(id: ID!): Admin
+    getAdmins: [Admin]
     getCondominio(id: ID!): Condominio
     getCondominios: [Condominio]
     getDirectiva(id: ID!): Directiva
+    getDirectivas: [Directiva]
     getEspaciosByCondominio(id: ID!): [Espacio]
-    getMulta(id:ID!): Multa
+    getMulta(id: ID!): Multa
     getMultas: [Multa]
-    getReserva(id:ID!): Reserva
+    getReserva(id: ID!): Reserva
     getReservas: [Reserva]
-    getResidente(id:ID!): Residente
+    getResidente(id: ID!): Residente
     getResidentes: [Residente]
   }
 
@@ -324,7 +314,7 @@ const typeDefs = gql `
     addSuperUser(input: SuperUserInput): SuperUser
     updateSuperUser(id: ID!, input: SuperUserInput): SuperUser
 
-    addAdmin(input: AdminInput): Admin
+    addAdmin(input: AdminInput, idCondominio: String): Admin
     updateAdmin(id: ID!, input: AdminInput): Admin
     deleteAdmin(id: ID!): Alert
 
@@ -332,7 +322,7 @@ const typeDefs = gql `
     updateCondominio(id: ID!): Condominio
     deleteCondominio(id: ID!): Alert
 
-    addDirectiva(input: DirectivaInput): Directiva
+    addDirectiva(input: DirectivaInput, idCondominio: String): Directiva
     updateDirectiva(id: ID!, input: DirectivaInput): Directiva
     deleteDirectiva(id: ID!): Alert
 
@@ -340,7 +330,7 @@ const typeDefs = gql `
     updateEspacio(id: ID!, input: EspacioInput): Espacio
     deleteEspacio(id: ID!): Alert
 
-    addMulta(input: MultaInput): Multa
+    addMulta(input: MultaInput, idResidente: String): Multa
     updateMulta(id: ID!, input: MultaInput): Multa
     deleteMulta(id: ID!): Alert
 
@@ -351,7 +341,6 @@ const typeDefs = gql `
     addResidente(input: ResidenteInput): Residente
     updateResidente(id: ID!, input: ResidenteInput): Residente
     deleteResidente(id: ID!): Alert
-
   }
 `;
 
@@ -370,7 +359,7 @@ const resolvers = {
             return await Usuario.find();
         },
         async getCondominios(obj) {
-            const condo = await Condominio.find().populate('conserje');
+            const condo = await Condominio.find().populate("conserje");
             return condo;
         },
 
@@ -384,7 +373,10 @@ const resolvers = {
         },
         async getAdmin(obj, { id }) {
             const admin = await Admin.findById(id);
-            return admin;
+            return await admin.populate("email");
+        },
+        async getAdmins(obj) {
+            return await Admin.find().populate("email");
         },
         async getCondominio(obj, { id }) {
             const condominio = await Condominio.findById(id);
@@ -392,14 +384,18 @@ const resolvers = {
         },
         async getConserje(obj, { id }) {
             const conserje = await Conserje.findById(id);
-            
-            return await conserje.populate('condominio');
+
+            return await conserje.populate("condominio");
         },
         async getDirectiva(obj, { id }) {
             const directiva = await Directiva.findById(id);
-            return directiva;
+            return await directiva.populate("email");
         },
-        async getEspaciosByCondominio(obj, { id }) { //! Aca, se supone que se le debe entregar el id del condominio, cierto? de ser asi, el input debe cambiar su nombre? Y se le puede colocar un nombre descriptivo a la variable del input? o debe tener el mismo nombre presente en el Template String?
+        async getDirectivas(obj) {
+            return await Directiva.find().populate("email");
+        },
+        async getEspaciosByCondominio(obj, { id }) {
+            //! Aca, se supone que se le debe entregar el id del condominio, cierto? de ser asi, el input debe cambiar su nombre? Y se le puede colocar un nombre descriptivo a la variable del input? o debe tener el mismo nombre presente en el Template String?
 
             const condominio = await Condominio.findById(id);
             const espacios = condominio.espacios;
@@ -410,10 +406,10 @@ const resolvers = {
 
         async getMulta(obj, { id }) {
             const multa = await Multa.findById(id);
-            return multa;
+            return await multa.populate("comentario");
         },
         async getMultas(obj) {
-            return await Multa.find();
+            return await Multa.find().populate("comentario");
         },
 
         async getReserva(obj, { id }) {
@@ -429,16 +425,9 @@ const resolvers = {
         },
         async getResidentes(obj) {
             return await Residente.find();
-        }
-        
-
-
-
-
+        },
     },
     Mutation: {
-
-
         //Agregar usuarios
         async addUsuario(obj, { input }) {
             const usuario = new Usuario(input);
@@ -456,18 +445,18 @@ const resolvers = {
         async deleteUsuario(obj, { id }) {
             await Usuario.deleteOne({ _id: id });
             return {
-                message: "Usuario Eliminado"
-            }
+                message: "Usuario Eliminado",
+            };
         },
-        async addConserje(_, { input, idCondominio}) {
+        async addConserje(_, { input, idCondominio }) {
             const condo = await Condominio.findById(idCondominio);
-            let conserje = new Conserje({... input, condominio: condo._id });
+            let conserje = new Conserje({...input, condominio: condo._id });
             conserje = await conserje.save();
             console.log(condo);
             console.log(conserje);
             condo.conserje.push(conserje);
             await condo.save();
-            return await conserje.populate('condominio');
+            return await conserje.populate("condominio");
         },
         async updateConserje(obj, { id, input }) {
             const conserje = await conserje.findByIdAndUpdate(id, input);
@@ -476,8 +465,8 @@ const resolvers = {
         async deleteConserje(obj, { id }) {
             await Conserje.deleteOne({ _id: id });
             return {
-                message: "Conserje Eliminado"
-            }
+                message: "Conserje Eliminado",
+            };
         },
         //superusuario
         async addSuperUser(obj, { input }) {
@@ -486,18 +475,23 @@ const resolvers = {
             return superUsuario;
         },
 
-
         async updateSuperUser(obj, { id, input }) {
             const superUsuario = await superUsuario.findByIdAndUpdate(id, input);
             return superUsuario;
         },
 
         //Admin
-        async addAdmin(obj, { input }) {
-            const admin = new Admin(input);
-            await admin.save();
-            return admin;
+        async addAdmin(_, { input, idCondominio }) {
+            const condo = await Condominio.findById(idCondominio);
+            let admin = new Admin({...input, condominio: condo._id });
+            admin = await admin.save();
+            console.log(condo);
+            console.log(admin);
+            condo.admin = admin;
+            await condo.save();
+            return await admin.populate("condominio");
         },
+
         async updateAdmin(obj, { id, input }) {
             const admin = await admin.findByIdAndUpdate(id, input);
             return admin;
@@ -505,8 +499,8 @@ const resolvers = {
         async deleteAdmin(obj, { id }) {
             await Admin.deleteOne({ _id: id });
             return {
-                message: "Admin Eliminado"
-            }
+                message: "Admin Eliminado",
+            };
         },
 
         //Condominio
@@ -522,16 +516,22 @@ const resolvers = {
         async deleteCondominio(obj, { id }) {
             await Condominio.deleteOne({ _id: id });
             return {
-                message: "Condominio Eliminado"
-            }
+                message: "Condominio Eliminado",
+            };
         },
 
         //Directiva
-        async addDirectiva(obj, { input }) {
-            const directiva = new Directiva(input);
-            await directiva.save();
-            return directiva;
+        async addDirectiva(_, { input, idCondominio }) {
+            const condo = await Condominio.findById(idCondominio);
+            let directiva = new Directiva({...input, condominio: condo._id });
+            directiva = await directiva.save();
+            console.log(condo);
+            console.log(directiva);
+            condo.directiva.push(directiva);
+            await condo.save();
+            return await directiva.populate("condominio");
         },
+
         async updateDirectiva(obj, { id, input }) {
             const directiva = await admin.findByIdAndUpdate(id, input);
             return directiva;
@@ -539,8 +539,8 @@ const resolvers = {
         async deleteDirectiva(obj, { id }) {
             await Directiva.deleteOne({ _id: id });
             return {
-                message: "Directiva Eliminada"
-            }
+                message: "Directiva Eliminada",
+            };
         },
 
         //Espacio
@@ -556,10 +556,9 @@ const resolvers = {
         async deleteEspacio(obj, { id }) {
             await Espacio.deleteOne({ _id: id });
             return {
-                message: "Espacio Eliminado"
-            }
+                message: "Espacio Eliminado",
+            };
         },
-
 
         //Multa
 
@@ -575,8 +574,19 @@ const resolvers = {
         async deleteMulta(obj, { id }) {
             await Multa.deleteOne({ _id: id });
             return {
-                message: "Multa Eliminada"
-            }
+                message: "Multa Eliminada",
+            };
+        },
+
+        async addAdmin(_, { input, idResidente }) {
+            const resi = await Residente.findById(idResidente);
+            let multa = new Multa({...input, residente: resi._id });
+            multa = await multa.save();
+            console.log(resi);
+            console.log(multa);
+            resi.multa.push(multa);
+            await resi.save();
+            return await multa.populate("residente");
         },
 
         //reserva
@@ -592,8 +602,8 @@ const resolvers = {
         async deleteReserva(obj, { id }) {
             await Reserva.deleteOne({ _id: id });
             return {
-                message: "Reserva Eliminada"
-            }
+                message: "Reserva Eliminada",
+            };
         },
 
         //residente
@@ -610,14 +620,11 @@ const resolvers = {
         async deleteResidente(obj, { id }) {
             await Residente.deleteOne({ _id: id });
             return {
-                message: "Residente Eliminado"
-            }
+                message: "Residente Eliminado",
+            };
         },
-
-
-
-    }
-}
+    },
+};
 
 //Sincronizar ApolloServer con Express
 
