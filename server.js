@@ -17,6 +17,7 @@ const Multa = require('./models/multa');
 const Reserva = require('./models/reserva');
 const Residente = require('./models/residente');
 const Evento = require('./models/evento');
+const Espacio = require('./models/espacio');
 
 // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) 
@@ -35,17 +36,7 @@ const typeDefs = gql `
     condominio: Condominio
   }
 
-  type Condominio {
-    id: ID!
-    nombre: String
-    admin: [Admin]
-    directiva: [Directiva]
-    conserje: [Conserje]
-    residente: [Residente]
-    libroEvento: LibroEvento
-    libroGasto: LibroGasto
-    espacios: [Espacio]
-  }
+  
 
   type Conserje {
     id: ID!
@@ -64,16 +55,14 @@ const typeDefs = gql `
   }
 
   type Espacio {
+    id: ID!
     nombre: String!
-    reserva: Reserva
+    reservas: [Reserva]
     reservado: Boolean!
+    condominio: Condominio
   }
 
-  type Evento {
-    conserje: Conserje!
-    glosa: String!
-    libro: LibroEvento!
-  }
+ 
 
   type GastoComun {
     tipo: String
@@ -110,13 +99,16 @@ const typeDefs = gql `
     pass: String!
     deuda: Int!
     condominio: Condominio
+    reservas: [Reserva]
   }
 
 
   type Reserva{
-    residente: Residente!
+    id: ID!
+    residente: Residente
     espacio: Espacio
     pagado: Boolean
+    fecha: Date
   }
 
   type SuperUser {
@@ -144,27 +136,8 @@ const typeDefs = gql `
     espacios: [Espacio]
   }
 
-  type Conserje {
-    id: ID!
-    userName: String!
-    email: String!
-    pass: String!
-    condominio: Condominio
-  }
 
-  type Directiva {
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-    condominio: Condominio
-  }
 
-  type Espacio {
-    nombre: String!
-    reserva: Reserva
-    reservado: Boolean!
-  }
 
   type Evento {
     conserje: Conserje!
@@ -173,42 +146,9 @@ const typeDefs = gql `
     fecha: Date
   }
 
-  type GastoComun {
-    tipo: String
-    vencimiento: Date!
-    monto: Int!
-    residente: Residente!
-    glosa: String
-    libro: LibroGasto!
-  }
 
-  type LibroEvento {
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-  }
 
-  type LibroGasto {
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-  }
-
-  type Multa {
-    residente: Residente
-    fecha: Date
-    monto: Int
-    comentario: String
-  }
-
-  type Residente {
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-    deuda: Int!
-    condominio: Condominio
-  }
+ 
 
   type SuperUser {
     id: ID!
@@ -217,15 +157,8 @@ const typeDefs = gql `
     email: String!
   }
 
-  type Usuario {
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-  }
 
   type Alert {
-
     message: String
   }
 
@@ -267,18 +200,16 @@ const typeDefs = gql `
   }
 
   input ReservaInput{
-    residente: String!
-    espacio: String!
     pagado: Boolean
+    fecha: Date
 
   }
   
   input ResidenteInput{
-    userName: String!
-    email: String!
-    pass: String!
+    userName: String
+    email: String
+    pass: String
     deuda: Int
-    condominio: String
 
   }
 
@@ -290,8 +221,8 @@ const typeDefs = gql `
   }
 
   input EspacioInput{
-    nombre: String!
-    reservado: Boolean!
+    nombre: String
+    reservado: Boolean
   }
 
   type Query {
@@ -304,6 +235,8 @@ const typeDefs = gql `
     getCondominios: [Condominio]
     getDirectiva(id: ID!): Directiva
     getEspaciosByCondominio(id: ID!): [Espacio]
+    getEspacios: [Espacio]
+    getEspacio(id:ID!): Espacio
     getMulta(id:ID!): Multa
     getMultas: [Multa]
     getReserva(id:ID!): Reserva
@@ -336,7 +269,7 @@ const typeDefs = gql `
     updateDirectiva(id: ID!, input: DirectivaInput): Directiva
     deleteDirectiva(id: ID!): Alert
 
-    addEspacio(input: EspacioInput): Espacio
+    addEspacio(input: EspacioInput, idCondominio: String): Espacio
     updateEspacio(id: ID!, input: EspacioInput): Espacio
     deleteEspacio(id: ID!): Alert
 
@@ -344,11 +277,11 @@ const typeDefs = gql `
     updateMulta(id: ID!, input: MultaInput): Multa
     deleteMulta(id: ID!): Alert
 
-    addReserva(input: ReservaInput): Reserva
+    addReserva(input: ReservaInput, idResidente: String, idEspacio: String): Reserva
     updateReserva(id: ID!, input: ReservaInput): Reserva
     deleteReserva(id: ID!): Alert
 
-    addResidente(input: ResidenteInput): Residente
+    addResidente(input: ResidenteInput, idCondominio: String ): Residente
     updateResidente(id: ID!, input: ResidenteInput): Residente
     deleteResidente(id: ID!): Alert
 
@@ -370,7 +303,7 @@ const resolvers = {
             return await Usuario.find();
         },
         async getCondominios(obj) {
-            const condo = await Condominio.find().populate('conserje');
+            const condo = await Condominio.find().populate('residente'); //el populate debe ser según lo que queremos ver, no acepta los dos
             return condo;
         },
 
@@ -405,6 +338,13 @@ const resolvers = {
             const espacios = condominio.espacios;
             return espacios;
         },
+        async getEspacios(obj) {
+          return await Espacio.find().populate('reservas');
+        },
+        async getEspacio(obj ,{ id }) {
+          const espacio = await Espacio.findById(id);
+          return await espacio.populate('reservas');
+        },
 
         //multa reserva y residente
 
@@ -418,17 +358,19 @@ const resolvers = {
 
         async getReserva(obj, { id }) {
             const reserva = await Reserva.findById(id);
-            return reserva;
+            return await reserva.populate('residente');
         },
+        
         async getReservas(obj) {
-            return await Reserva.find();
+          return await Reserva.find().populate('residente')
         },
+
         async getResidente(obj, { id }) {
             const residente = await Residente.findById(id);
-            return residente;
+            return await residente.populate('condominio');
         },
         async getResidentes(obj) {
-            return await Residente.find();
+            return await Residente.find().populate('condominio');
         }
         
 
@@ -543,11 +485,27 @@ const resolvers = {
             }
         },
 
+        async addConserje(_, { input, idCondominio}) {
+          const condo = await Condominio.findById(idCondominio);
+          let conserje = new Conserje({... input, condominio: condo._id });
+          conserje = await conserje.save();
+          console.log(condo);
+          console.log(conserje);
+          condo.conserje.push(conserje);
+          await condo.save();
+          return await conserje.populate('condominio');
+      },
+
         //Espacio
-        async addEspacio(obj, { input }) {
-            const espacio = new Espacio(input);
-            await espacio.save();
-            return espacio;
+        async addEspacio(_, { input, idCondominio }) {
+          const condo = await Condominio.findById(idCondominio);
+          let espacio = new Espacio({... input, condominio: condo._id });
+          espacio = await espacio.save();
+          console.log(condo);
+          console.log(espacio);
+          condo.espacios.push(espacio);
+          await condo.save();
+          return await espacio.populate('condominio');
         },
         async updateEspacio(obj, { id, input }) {
             const espacio = await admin.findByIdAndUpdate(id, input);
@@ -580,11 +538,25 @@ const resolvers = {
         },
 
         //reserva
-        async addReserva(obj, { input }) {
-            const reserva = new Reserva(input);
-            await reserva.save();
-            return reserva;
+
+
+        async addReserva(_, { input, idResidente, idEspacio}) { //idCondominio = idResidente
+          const resi = await Residente.findById(idResidente);
+          const espa = await Espacio.findById(idEspacio);
+          let reserva = new Reserva({... input, residente: resi._id, espacio: espa._id });
+          reserva = await reserva.save();
+          console.log(resi);
+          console.log(reserva);  
+          resi.reservas.push(reserva); 
+          await resi.save();  
+
+          espa.reservas.push(reserva); 
+          await espa.save();   
+
+          return await reserva.populate('residente','espacio');
         },
+
+
         async updateReserva(obj, { id, input }) {
             const reserva = await Reserva.findByIdAndUpdate(id, input);
             return reserva;
@@ -598,10 +570,15 @@ const resolvers = {
 
         //residente
 
-        async addResidente(obj, { input }) {
-            const residente = new Residente(input);
-            await residente.save();
-            return residente;
+        async addResidente(obj, { input,idCondominio }) {
+          const condo = await Condominio.findById(idCondominio);
+          let residente = new Residente({... input, condominio: condo._id });
+          residente = await residente.save();
+          console.log(condo);
+          console.log(residente);
+          condo.residente.push(residente);
+          await condo.save();
+          return await residente.populate('condominio');
         },
         async updateResidente(obj, { id, input }) {
             const residente = await Residente.findByIdAndUpdate(id, input);
