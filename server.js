@@ -7,7 +7,6 @@ const cors = require('cors');
 
 const { ApolloServer, gql } = require('apollo-server-express'); // Instalamos submodulos del require
 
-const { merge } = require('lodash');
 
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 const Conserje = require('./models/conserje');
@@ -281,10 +280,11 @@ const typeDefs = gql `
     
     addLibroEvento(input: LibroInput, idCondominio: String): LibroEvento
 
-
     addEvento(glosa: String, idConserje: String, idLibroEvento: String): Evento
 
     addLibroGastos(input: LibroInput, idCondominio: String): LibroGasto
+
+    addGastoComun(glosa: String, monto: Int, tipo: String, idResidente: String, idLibroGasto: String): GastoComun
 
   }
 `;
@@ -627,6 +627,34 @@ const resolvers = {
           
           return await libro.populate('condominio');
 
+        },
+
+        // gastos
+
+        async addGastoComun(_, {glosa, monto, tipo, idResidente, idLibroGasto}){
+          const libro = await LibroGasto.findById(idLibroGasto);
+          const resi = await Residente.findById(idResidente);
+
+          // Como trabajamos la fecha?! Probando con Date(), que produce la fecha actual de la call.
+          const fecha = Date();
+
+          let gasto = new GastoComun({glosa: glosa, residente: resi._id, libro: libro._id, vencimiento: fecha, monto: monto, tipo: tipo});
+
+          gasto = await gasto.save();
+
+          console.log(libro);
+          console.log(resi);
+          console.log(gasto);
+
+          const cant_nueva = libro.cantidad + 1;
+
+          const res = await LibroEvento.updateOne({_id: idLibroGasto}, {cantidad: cant_nueva})
+
+          console.log(res)
+          libro.gastos.push(gasto);
+          await libro.save();
+
+          return await gastos.populate(['libro','conserje']);
         },
     }
 }
