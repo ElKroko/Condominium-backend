@@ -17,6 +17,9 @@ const Multa = require('./models/multa');
 const Reserva = require('./models/reserva');
 const Residente = require('./models/residente');
 const Evento = require('./models/evento');
+const Directiva = require('./models/directiva');
+const LibroEvento = require('./models/libroEvento');
+
 
 // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) 
@@ -47,71 +50,6 @@ const typeDefs = gql `
     espacios: [Espacio]
   }
 
-  type Conserje {
-    id: ID!
-    userName: String!
-    email: String!
-    pass: String!
-    condominio: Condominio
-  }
-
-  type Directiva {
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-    condominio: Condominio
-  }
-
-  type Espacio {
-    nombre: String!
-    reserva: Reserva
-    reservado: Boolean!
-  }
-
-  type Evento {
-    conserje: Conserje!
-    glosa: String!
-    libro: LibroEvento!
-  }
-
-  type GastoComun {
-    tipo: String
-    vencimiento: Date!
-    monto: Int!
-    residente: Residente!
-    glosa: String
-    libro: LibroGasto!
-  }
-
-  type LibroEvento {
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-  }
-
-  type LibroGasto {
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-  }
-
-  type Multa {
-    residente: Residente
-    fecha: Date
-    monto: Int
-    comentario: String
-  }
-
-  type Residente {
-    id: ID!
-    userName: String!
-    email: String!
-    pass: String!
-    deuda: Int!
-    condominio: Condominio
-  }
-
 
   type Reserva{
     residente: Residente!
@@ -133,16 +71,6 @@ const typeDefs = gql `
     pass: String!
   }
 
-  type Condominio {
-    id: ID!
-    admin: [Admin]
-    directiva: [Directiva]
-    conserje: [Conserje]
-    residente: [Residente]
-    libroEvento: LibroEvento
-    libroGasto: LibroGasto
-    espacios: [Espacio]
-  }
 
   type Conserje {
     id: ID!
@@ -160,6 +88,15 @@ const typeDefs = gql `
     condominio: Condominio
   }
 
+  type Residente {
+    id: ID!
+    nombre: String!
+    email: String!
+    pass: String!
+    deuda: Int!
+    condominio: Condominio
+  }
+
   type Espacio {
     nombre: String!
     reserva: Reserva
@@ -167,10 +104,16 @@ const typeDefs = gql `
   }
 
   type Evento {
+    id: ID!
     conserje: Conserje!
     glosa: String!
     libro: LibroEvento!
     fecha: Date
+  }
+
+
+  input EventoInput{
+    glosa: String!
   }
 
   type GastoComun {
@@ -183,15 +126,10 @@ const typeDefs = gql `
   }
 
   type LibroEvento {
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
-  }
-
-  type LibroGasto {
-    cantidad: Int!
-    condominio: Condominio!
-    gastos: [GastoComun]
+    id: ID!
+    cantidad: Int
+    condominio: Condominio
+    eventos: [Evento]
   }
 
   type Multa {
@@ -201,31 +139,21 @@ const typeDefs = gql `
     comentario: String
   }
 
-  type Residente {
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
-    deuda: Int!
-    condominio: Condominio
+
+
+
+  input LibroInput {
+    cantidad: Int
   }
 
-  type SuperUser {
+  type LibroGasto {
     id: ID!
-    userName: String!
-    pass: String!
-    email: String!
-  }
-
-  type Usuario {
-    id: ID!
-    nombre: String!
-    email: String!
-    pass: String!
+    cantidad: Int!
+    condominio: Condominio!
+    gastos: [GastoComun]
   }
 
   type Alert {
-
     message: String
   }
 
@@ -270,7 +198,6 @@ const typeDefs = gql `
     residente: String!
     espacio: String!
     pagado: Boolean
-
   }
   
   input ResidenteInput{
@@ -279,11 +206,7 @@ const typeDefs = gql `
     pass: String!
     deuda: Int
     condominio: String
-
   }
-
-
-
 
   input CondominioInput {
       nombre: String!
@@ -310,6 +233,10 @@ const typeDefs = gql `
     getReservas: [Reserva]
     getResidente(id:ID!): Residente
     getResidentes: [Residente]
+
+    getLibroEvento: LibroEvento
+    getLibroEventoCondominios: [Condominio]
+    getEventos: [Evento]
   }
 
   type Mutation {
@@ -351,6 +278,13 @@ const typeDefs = gql `
     addResidente(input: ResidenteInput): Residente
     updateResidente(id: ID!, input: ResidenteInput): Residente
     deleteResidente(id: ID!): Alert
+    
+    addLibroEvento(input: LibroInput, idCondominio: String): LibroEvento
+
+
+    addEvento(glosa: String, idConserje: String, idLibroEvento: String): Evento
+
+    addLibroGastos(input: LibroInput, idCondominio: String): LibroGasto
 
   }
 `;
@@ -370,7 +304,11 @@ const resolvers = {
             return await Usuario.find();
         },
         async getCondominios(obj) {
-            const condo = await Condominio.find().populate('conserje');
+          const condo = await Condominio.find();
+          return condo;
+      },
+        async getLibroEventoCondominios(obj) {
+            const condo = await Condominio.find().populate('libroEvento');
             return condo;
         },
 
@@ -429,13 +367,24 @@ const resolvers = {
         },
         async getResidentes(obj) {
             return await Residente.find();
-        }
+        },
+
+
+
+        async getLibroEvento(obj){
+          const libroEvento = await LibroEvento.find().populate("condominio");
+          return libroEvento;
+        },
         
+        async getEventos(obj){
+          return await Evento.find().populate("conserje");
+        }
 
 
 
 
     },
+
     Mutation: {
 
 
@@ -614,8 +563,71 @@ const resolvers = {
             }
         },
 
+        // LibroEvento
+
+        async addLibroEvento(_, {input, idCondominio}) {
+          const condo = await Condominio.findById(idCondominio);
+          let libro = new LibroEvento({... input, condominio: condo._id});
+          libro = await libro.save();
+          const res = await Condominio.updateOne({_id: condo._id},{libroEvento: libro._id});
+
+          console.log(condo);
+          console.log("addLibroEvento")
+          console.log(res);
+          console.log("\n libro:");
+          console.log(libro)
+
+          
+          return await libro.populate('condominio');
+
+        },
 
 
+
+        // Evento
+
+        async addEvento(_, {glosa, idConserje, idLibroEvento}){
+          const libro = await LibroEvento.findById(idLibroEvento);
+          const conserje = await Conserje.findById(idConserje);
+
+          // Como trabajamos la fecha?! Probando con Date(), que produce la fecha actual de la call.
+          const fecha = Date();
+
+          let evento = new Evento({glosa: glosa, conserje: conserje._id, libro: libro._id, fecha: fecha});
+
+          evento = await evento.save();
+
+          console.log(libro);
+          console.log(conserje);
+          console.log(evento);
+
+          const cant_nueva = libro.cantidad + 1;
+
+          const res = await LibroEvento.updateOne({_id: idLibroEvento}, {cantidad: cant_nueva})
+
+          console.log(res)
+          libro.eventos.push(evento);
+          await libro.save();
+
+          return await evento.populate(['libro','conserje']);
+        },
+
+
+        // Libro Gastos
+        async addLibroGastos(_, {input, idCondominio}) {
+          const condo = await Condominio.findById(idCondominio);
+          let libro = new LibroGasto({... input, condominio: condo._id});
+          libro = await libro.save();
+          const res = await Condominio.updateOne({_id: condo._id},{libroGasto: libro._id});
+
+          console.log(res);
+          console.log("\n libro:");
+          console.log(libro)
+
+          
+          return await libro.populate('condominio');
+
+        },
     }
 }
 
