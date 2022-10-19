@@ -18,6 +18,8 @@ const Residente = require('./models/residente');
 const Evento = require('./models/evento');
 const Directiva = require('./models/directiva');
 const LibroEvento = require('./models/libroEvento');
+const LibroGasto = require('./models/libroGasto');
+const GastoComun = require('./models/gastoComun');
 
 
 // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
@@ -113,15 +115,23 @@ const typeDefs = gql `
 
   input EventoInput{
     glosa: String!
+    fecha: Date
   }
 
   type GastoComun {
+    id: ID!
     tipo: String
-    vencimiento: Date!
-    monto: Int!
+    vencimiento: Date
+    monto: Int
     residente: Residente!
     glosa: String
     libro: LibroGasto!
+  }
+
+  input GastoInput {
+    monto: Int
+    vencimiento: Date
+    glosa: String
   }
 
   type LibroEvento {
@@ -137,9 +147,6 @@ const typeDefs = gql `
     monto: Int
     comentario: String
   }
-
-
-
 
   input LibroInput {
     cantidad: Int
@@ -236,6 +243,9 @@ const typeDefs = gql `
     getLibroEvento: LibroEvento
     getLibroEventoCondominios: [Condominio]
     getEventos: [Evento]
+
+    getLibroGasto: LibroGasto
+    getGastos: [GastoComun]
   }
 
   type Mutation {
@@ -281,10 +291,14 @@ const typeDefs = gql `
     addLibroEvento(input: LibroInput, idCondominio: String): LibroEvento
 
     addEvento(glosa: String, idConserje: String, idLibroEvento: String): Evento
+    updateEvento(id: ID!, input: EventoInput): Evento
+    deleteEvento(id:ID!): Alert
 
     addLibroGastos(input: LibroInput, idCondominio: String): LibroGasto
 
     addGastoComun(glosa: String, monto: Int, tipo: String, idResidente: String, idLibroGasto: String): GastoComun
+    updateGastoComun(id:ID!, input: GastoInput): GastoComun
+    deleteGastoComun(id:ID!): Alert
 
   }
 `;
@@ -378,9 +392,16 @@ const resolvers = {
         
         async getEventos(obj){
           return await Evento.find().populate("conserje");
+        },
+
+        async getLibroGasto(obj){
+          const libroGasto = await LibroGasto.find().populate("condominio");
+          return libroGasto;
+        },
+
+        async getGastos(obj){
+          return await GastoComun.find().populate("residente");
         }
-
-
 
 
     },
@@ -612,6 +633,17 @@ const resolvers = {
           return await evento.populate(['libro','conserje']);
         },
 
+        async updateEvento(obj, { id, input }) {
+          const evento = await Evento.findByIdAndUpdate(id, input);
+          return evento;
+        },
+
+        async deleteEvento(obj, { id }){
+          await Evento.deleteOne({_id: id});
+          return{
+              message: "Evento Eliminado"
+          }
+        },
 
         // Libro Gastos
         async addLibroGastos(_, {input, idCondominio}) {
@@ -655,6 +687,19 @@ const resolvers = {
           await libro.save();
 
           return await gastos.populate(['libro','conserje']);
+        },
+
+        async updateGastoComun(obj, { id, input }) {
+          const gasto = await GastoComun.findByIdAndUpdate(id, input);
+          return gasto;
+        },
+
+        // Como "descontamos 1" del Libro de gastos? Hacemos UpdateLibroGastos y cantidad - 1?
+        async deleteGastoComun(obj, { id }){
+          await GastoComun.deleteOne({_id: id});
+          return{
+              message: "Gasto Comun Eliminado"
+          }
         },
     }
 }
