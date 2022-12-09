@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const eventoSchema = new mongoose.Schema({
-    conserje: { type: mongoose.Schema.ObjectId, ref: "Conserje" },
+    tipo: String,
     glosa: String,
-    libro: { type: mongoose.Schema.ObjectId, ref: "LibroEvento" },
-    fecha: Date
+    fecha: Date,
+    responsable: String
 });
 
 module.exports = mongoose.model("Evento", eventoSchema);
