@@ -66,6 +66,7 @@ const typeDefs = gql `
     fecha: Date
     tipo: String
     responsable: String
+    info_adicional: String
   }
 
   type GastoComun {
@@ -235,6 +236,7 @@ const typeDefs = gql `
     tipo: String
     fecha: Date
     responsable: String
+    info_adicional: String
   }
 
   type Query {
