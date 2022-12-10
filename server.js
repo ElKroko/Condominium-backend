@@ -94,9 +94,10 @@ const typeDefs = gql `
   }
 
   type Reserva{
-    residente: Residente!
-    espacio: Espacio
-    pagado: Boolean
+    residente: String
+    espacio: String
+    pago: Int
+    fecha: Date
   }
 
   type SuperUser {
@@ -200,9 +201,10 @@ const typeDefs = gql `
   }
 
   input ReservaInput{
-    residente: String!
-    espacio: String!
-    pagado: Boolean
+    residente: String
+    espacio: String
+    pago: Int
+    fecha: Date
 
   }
   
