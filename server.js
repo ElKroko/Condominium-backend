@@ -19,6 +19,7 @@ const Residente = require('./models/residente');
 const Evento = require('./models/evento');
 const Espacio = require('./models/espacio')
 const GastoComun = require('./models/gastoComun')
+const Aviso = require('./models/aviso')
 
 // Uri de MongoDB Atlas + params que hacen una coneccion 'tal cual como esta', y lo que se llama en mongoDB quede igual al proyecto.
 mongoose.connect('mongodb+srv://condominium:VlaugjwS8bbLoZTA@cluster0.60rrfpl.mongodb.net/test', { useNewUrlParser: true, useUnifiedTopology: true }) 
@@ -84,15 +85,6 @@ const typeDefs = gql `
     comentario: String
   }
 
-  type Residente {
-    id: ID!
-    userName: String!
-    email: String!
-    pass: String!
-    deuda: Int!
-    condominio: Condominio
-  }
-
   type Reserva{
     residente: String
     espacio: String
@@ -137,9 +129,10 @@ const typeDefs = gql `
 
   type Residente {
     id: ID!
-    nombre: String!
+    userName: String!
     email: String!
     pass: String!
+    location: String
     deuda: Int!
     condominio: Condominio
   }
@@ -156,6 +149,13 @@ const typeDefs = gql `
     nombre: String!
     email: String!
     pass: String!
+  }
+
+  type Aviso {
+    titulo: String!
+    creador: String
+    descripcion: String
+    fecha: Date
   }
 
   type Alert {
@@ -212,6 +212,7 @@ const typeDefs = gql `
     userName: String!
     email: String!
     pass: String!
+    location: String
     deuda: Int
     condominio: String
   }
@@ -241,6 +242,13 @@ const typeDefs = gql `
     info_adicional: String
   }
 
+  input AvisoInput {
+    titulo: String!
+    creador: String
+    descripcion: String
+    fecha: Date
+  }
+
   type Query {
     getUsuarios: [Usuario]
     getUsuario(id: ID!): Usuario
@@ -260,6 +268,7 @@ const typeDefs = gql `
     getGastos: [GastoComun]
     getGastosByResidente(id: ID!): [GastoComun]
     getEventos: [Evento]
+    getAvisos: [Aviso]
   }
 
   type Mutation {
@@ -305,6 +314,8 @@ const typeDefs = gql `
     addGastoComun(input: GastoComunInput): GastoComun
 
     addEvento(input: EventoInput): Evento
+
+    addAviso(input: AvisoInput): Aviso
   }
 `;
 
@@ -393,7 +404,9 @@ const resolvers = {
         async getEventos(obj) {
           return await Evento.find();
         },
-
+        async getAvisos(obj) {
+          return await Aviso.find();
+        },
 
 
 
@@ -588,7 +601,14 @@ const resolvers = {
         const evento = new Evento(input);
         await evento.save();
         return evento;
-    }
+      },
+
+      //Event
+      async addAviso(obj, { input }) {
+        const aviso = new Aviso(input);
+        await aviso.save();
+        return aviso;
+      } 
 
     }
 }

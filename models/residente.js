@@ -7,6 +7,7 @@ const residenteSchema = new mongoose.Schema({
     userName: String,
     pass: String,
     email: String,
+    location: String,
     deuda: Number,
     condominio: { type: mongoose.Schema.ObjectId, ref: "Condominio" }
 });
