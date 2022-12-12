@@ -4,6 +4,7 @@
 const mongoose = require("mongoose");
 
 const gastoComunSchema = new mongoose.Schema({
+    nombre: String,
     tipo: String,
     vencimiento: Date,
     monto: Number,

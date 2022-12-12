@@ -63,7 +63,8 @@ const typeDefs = gql `
   }
 
   type Evento {
-    glosa: String!
+    nombre: String!
+    glosa: String
     fecha: Date
     tipo: String
     responsable: String
@@ -71,6 +72,7 @@ const typeDefs = gql `
   }
 
   type GastoComun {
+    nombre: String
     tipo: String
     vencimiento: Date!
     monto: Int!
@@ -227,6 +229,7 @@ const typeDefs = gql `
   }
 
   input GastoComunInput{
+    nombre: String
     tipo: String
     vencimiento: Date
     monto: Int
@@ -235,6 +238,7 @@ const typeDefs = gql `
   }
 
   input EventoInput{
+    nombre: String
     glosa: String
     tipo: String
     fecha: Date
