@@ -7,7 +7,7 @@ const cors = require('cors');
 
 const { ApolloServer, gql } = require('apollo-server-express'); // Instalamos submodulos del require
 
-const { merge } = require('lodash');
+const { merge, lte } = require('lodash');
 
 const Usuario = require('./models/usuario'); // no hace falta especificar que es .js, JS lo asume.
 const Conserje = require('./models/conserje');
@@ -54,12 +54,6 @@ const typeDefs = gql `
     email: String!
     pass: String!
     condominio: Condominio
-  }
-
-  type Espacio {
-    nombre: String!
-    reserva: Reserva
-    reservado: Boolean!
   }
 
   type Evento {
@@ -118,8 +112,8 @@ const typeDefs = gql `
 
   type Espacio {
     nombre: String!
-    reserva: Reserva
-    reservado: Boolean!
+    cantidad: Int
+    reservados: Int
   }
 
   type Multa {
@@ -225,7 +219,8 @@ const typeDefs = gql `
 
   input EspacioInput{
     nombre: String!
-    reservado: Boolean!
+    cantidad: Int!
+    reservados: Int!
   }
 
   input GastoComunInput{
@@ -262,7 +257,7 @@ const typeDefs = gql `
     getCondominio(id: ID!): Condominio
     getCondominios: [Condominio]
     getDirectiva(id: ID!): Directiva
-    getEspaciosByCondominio(id: ID!): [Espacio]
+    getEspacios: [Espacio]
     getMulta(id:ID!): Multa
     getMultas: [Multa]
     getReserva(id:ID!): Reserva
@@ -316,8 +311,10 @@ const typeDefs = gql `
     deleteResidente(id: ID!): Alert
     
     addGastoComun(input: GastoComunInput): GastoComun
+    deleteGastoComunes(id: ID!): Alert
 
     addEvento(input: EventoInput): Evento
+    deleteEventos(id: ID!): Alert
 
     addAviso(input: AvisoInput): Aviso
   }
@@ -367,10 +364,8 @@ const resolvers = {
             const directiva = await Directiva.findById(id);
             return directiva;
         },
-        async getEspaciosByCondominio(obj, { id }) { //! Aca, se supone que se le debe entregar el id del condominio, cierto? de ser asi, el input debe cambiar su nombre? Y se le puede colocar un nombre descriptivo a la variable del input? o debe tener el mismo nombre presente en el Template String?
-
-            const condominio = await Condominio.findById(id);
-            const espacios = condominio.espacios;
+        async getEspacios(obj) {
+            const espacios = Espacio.find();
             return espacios;
         },
 
@@ -529,11 +524,11 @@ const resolvers = {
             return espacio;
         },
         async updateEspacio(obj, { id, input }) {
-            const espacio = await admin.findByIdAndUpdate(id, input);
+            const espacio = await espacio.findByIdAndUpdate(id, input);
             return espacio;
         },
         async deleteEspacio(obj, { id }) {
-            await Espacio.deleteOne({ _id: id });
+            await Espacio.deleteMany();
             return {
                 message: "Espacio Eliminado"
             }
@@ -562,6 +557,10 @@ const resolvers = {
         async addReserva(obj, { input }) {
             const reserva = new Reserva(input);
             await reserva.save();
+            const espacios = await Espacio.find();
+            let updateEspacio = espacios.filter( (e) => e.nombre == input.espacio);
+            updateEspacio[0].reservados += 1
+            await updateEspacio[0].save()
             return reserva;
         },
         async updateReserva(obj, { id, input }) {
@@ -569,7 +568,12 @@ const resolvers = {
             return reserva;
         },
         async deleteReserva(obj, { id }) {
-            await Reserva.deleteOne({ _id: id });
+            await Reserva.deleteMany();
+            const espacios = await Espacio.find();
+            await espacios.map( e => {
+              e.reservados = 0
+              e.save()
+            })
             return {
                 message: "Reserva Eliminada"
             }
@@ -599,12 +603,23 @@ const resolvers = {
           await gasto.save();
           return gasto;
       },
-
+      async deleteGastoComunes(obj) {
+        await GastoComun.deleteMany();
+        return {
+            message: "Gasto Comunes eliminados"
+        }
+      },
       //Event
       async addEvento(obj, { input }) {
         const evento = new Evento(input);
         await evento.save();
         return evento;
+      },
+      async deleteEventos(obj) {
+        await Evento.deleteMany();
+        return {
+            message: "Eventos eliminados"
+        }
       },
 
       //Event
